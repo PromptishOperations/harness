@@ -1,0 +1,16 @@
+{
+  "name": "promptish-webdev-harness",
+  "version": "1.0.0",
+  "description": "Chat-driven IDE for static websites. Edit your site by talking to Claude.",
+  "private": false,
+  "main": "start.js",
+  "scripts": {
+    "start": "node start.js",
+    "migrate": "node server/migrate.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.90.0",
+    "better-sqlite3": "^11.3.0",
+    "dotenv": "^17.4.2"
+  }
+}
