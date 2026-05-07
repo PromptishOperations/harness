@@ -1,0 +1,33 @@
+name: ❓ Question / how-do-I
+description: You're not sure how to do something
+title: "[question] "
+labels: ["question", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, please check the README and skim closed issues — your question may already have an answer.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: What are you trying to do?
+      description: One paragraph of plain English describing your goal.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried already?
+      description: Even "I read the README and got stuck at step 3" is useful.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Harness version
+      placeholder: e.g. 0.3.2
+    validations:
+      required: true
