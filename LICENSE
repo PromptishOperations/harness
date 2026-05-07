@@ -1,0 +1,126 @@
+Promptish Harness License v1.0
+Copyright (c) 2026 Promptish
+
+This is a custom source-available license. It is not OSI-approved. Read it
+before you use the software. It is intentionally short.
+
+Buy commercial license: https://promptish.io/harness  ($99 one-time)
+
+================================================================================
+1. DEFINITIONS
+================================================================================
+
+"Software" means the Promptish Harness source code and accompanying files in
+this repository.
+
+"You" means the individual or legal entity exercising rights under this license.
+
+"Personal Use" means use by a natural person for their own learning,
+experimentation, hobby projects, or non-revenue-generating personal websites.
+
+"Evaluation Use" means use for the purpose of deciding whether to purchase a
+commercial license, limited to thirty (30) days from first execution of the
+Software.
+
+"Commercial Use" means any use of the Software in connection with a business,
+organization, employer, paid client engagement, agency work, internal company
+operations, revenue-generating product, or any activity intended to produce
+direct or indirect commercial advantage. Use by an employee on behalf of an
+employer is Commercial Use even if the employee is not paid extra for it.
+
+"Commercial License" means a paid license obtained from Promptish at
+https://promptish.io/harness.
+
+================================================================================
+2. GRANT — FREE TIER
+================================================================================
+
+Subject to the terms below, You are granted a worldwide, royalty-free,
+non-exclusive, non-transferable license to:
+
+  (a) use the Software for Personal Use;
+  (b) use the Software for Evaluation Use for up to thirty (30) days;
+  (c) modify the Software for Your own Personal Use or Evaluation Use;
+  (d) view, study, and audit the source code.
+
+================================================================================
+3. COMMERCIAL USE REQUIRES A PAID LICENSE
+================================================================================
+
+Commercial Use of the Software, in any form, requires a current Commercial
+License purchased from Promptish at https://promptish.io/harness.
+
+One Commercial License covers Commercial Use by a single natural person or a
+single legal entity. If You are unsure which applies to You, contact
+operator@promptish.io.
+
+================================================================================
+4. RESTRICTIONS
+================================================================================
+
+You may not:
+
+  (a) redistribute the Software, in source or compiled form, to any third party,
+      whether for free or for a fee;
+  (b) host the Software as a service for third parties;
+  (c) sublicense, sell, rent, or lease the Software;
+  (d) remove or alter copyright, license, or attribution notices;
+  (e) use the Software for Commercial Use without a current Commercial License.
+
+You may:
+
+  (a) modify the Software for Your own use under the tier You qualify for;
+  (b) submit changes back via pull request to the upstream repository.
+
+================================================================================
+5. TERMINATION
+================================================================================
+
+This license terminates automatically and immediately if You engage in
+Commercial Use without a current Commercial License, or if You breach any other
+term. On termination You must stop using the Software and destroy Your copies.
+The remedies in this section are in addition to any other remedies available at
+law or in equity.
+
+A Commercial License is non-revocable for the version You purchased, except for
+breach of these terms.
+
+================================================================================
+6. NO WARRANTY
+================================================================================
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+================================================================================
+7. NO SUPPORT OBLIGATION
+================================================================================
+
+Purchase of a Commercial License grants You the right to use the Software
+commercially. It does NOT grant any right to support, updates, bug fixes, or
+new versions. Support is best-effort via GitHub Issues. Updates are not
+guaranteed. The version You purchase is the version You own.
+
+================================================================================
+8. LIMITATION OF LIABILITY
+================================================================================
+
+IN NO EVENT SHALL PROMPTISH OR ITS CONTRIBUTORS BE LIABLE FOR ANY CLAIM,
+DAMAGES, OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT, OR OTHERWISE, ARISING
+FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE. TOTAL LIABILITY IS CAPPED AT THE AMOUNT YOU PAID FOR THE
+COMMERCIAL LICENSE, OR ZERO IF YOU DID NOT PAY.
+
+================================================================================
+9. GOVERNING LAW
+================================================================================
+
+This license is governed by the laws of the United States and the State of the
+licensor's principal place of business, without regard to conflict-of-laws
+principles.
+
+================================================================================
+
+Questions: operator@promptish.io
+Buy:       https://promptish.io/harness
