@@ -1,0 +1,86 @@
+name: 🐛 Bug report
+description: Something isn't working as documented
+title: "[bug] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug report. The more specific you are, the faster this gets fixed.
+        Please use this template — issues without it will be closed and you'll be asked to refile.
+
+  - type: input
+    id: version
+    attributes:
+      label: Harness version
+      description: The version you have installed (check `package.json` or the bottom of any UI screen).
+      placeholder: e.g. 0.3.2
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: Install method
+      options:
+        - downloaded zip from purchase email
+        - cloned git repo
+        - other (describe in steps)
+    validations:
+      required: true
+
+  - type: input
+    id: runtime
+    attributes:
+      label: Runtime
+      description: Node.js version + OS.
+      placeholder: e.g. Node 20.10.0 on Ubuntu 22.04
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered list. Be specific. "Click stuff" is not steps.
+      placeholder: |
+        1. Run `npm start`
+        2. Open localhost:9998
+        3. Click `webdev` tab
+        4. ...
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: What should have happened.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: What actually happened. If there's an error message, paste it verbatim.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (if any)
+      description: Paste any relevant terminal output or browser console errors. Wrap in code blocks.
+      render: shell
+
+  - type: checkboxes
+    id: searched
+    attributes:
+      label: Pre-flight
+      options:
+        - label: I searched existing issues for this bug.
+          required: true
+        - label: I'm running a current version (within the last 30 days of release).
+          required: true
