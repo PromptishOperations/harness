@@ -312,10 +312,20 @@ File edits MUST stay inside this directory. Never write outside it.${selectedFil
     // Customer's chat-driven file editing still works; arbitrary shell access does not.
     // Operators who genuinely need broader tools can override via env CLAUDE_ALLOWED_TOOLS.
     const allowedTools = process.env.CLAUDE_ALLOWED_TOOLS || 'Read Edit Write Glob Grep';
+
+    // Build the env we pass to `claude -p`. Strip empty-or-placeholder
+    // ANTHROPIC_API_KEY so claude falls through to its own credential store
+    // (Claude Code subscription auth) when the user hasn't actually set a key.
+    const childEnv = { ...process.env, HARNESS_DISPATCH_ID: dispatchId, HARNESS_CONVERSATION_ID: conversationId };
+    const ak = childEnv.ANTHROPIC_API_KEY;
+    if (!ak || ak.startsWith('placeholder') || ak === '') {
+      delete childEnv.ANTHROPIC_API_KEY;
+    }
+
     const child = spawn('claude', ['-p', '--allowedTools', allowedTools, '--model', MODEL], {
       cwd: SITE_DIR,
       shell: true,
-      env: { ...process.env, HARNESS_DISPATCH_ID: dispatchId, HARNESS_CONVERSATION_ID: conversationId },
+      env: childEnv,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     child.stdin.write(fullPrompt);
