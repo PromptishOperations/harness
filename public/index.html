@@ -194,7 +194,7 @@ function render() {
     ? 'width:100%;height:100%;'
     : `width:${bp}px;max-width:100%;height:100%;`;
   const iframe = el('iframe', {
-    src: `/api/site-preview/${encodeURI(previewFile)}`,
+    src: `api/site-preview/${encodeURI(previewFile)}`,
     style: iframeStyle,
   });
   const wrap = el('div', { class: bp === 'fit' ? 'preview-wrap' : 'preview-wrap scaled' }, iframe);
@@ -313,10 +313,10 @@ function buildChatPanel() {
         if (state.conversationId) fd.append('session_id', state.conversationId);
         if (state.currentFile) fd.append('selected_file', state.currentFile);
         sentAttachments.forEach(a => fd.append('images', a.file, a.name));
-        resp = await (await fetch('/api/site-chat', { method: 'POST', body: fd })).json();
+        resp = await (await fetch('api/site-chat', { method: 'POST', body: fd })).json();
         sentAttachments.forEach(a => { if (a.previewUrl) URL.revokeObjectURL(a.previewUrl); });
       } else {
-        resp = await (await fetch('/api/site-chat', {
+        resp = await (await fetch('api/site-chat', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt: msg, session_id: state.conversationId, selected_file: state.currentFile }),
         })).json();
@@ -368,7 +368,7 @@ async function pollDispatch(dispatchId, messagesEl, input, sendBtn) {
   let last = '';
   const tick = async () => {
     let p;
-    try { p = await api(`/api/site-chat-poll?dispatch_id=${encodeURIComponent(dispatchId)}`); }
+    try { p = await api(`api/site-chat-poll?dispatch_id=${encodeURIComponent(dispatchId)}`); }
     catch (e) { p = { content: '', status: 'failed' }; }
     if (p.content !== last) {
       last = p.content;
@@ -433,7 +433,7 @@ document.getElementById('toggle-chat').onclick = () => { state.chatCollapsed = !
 // Boot
 // -----------------------------------------------------------------------------
 async function loadFiles() {
-  try { state.files = await api('/api/site-files'); }
+  try { state.files = await api('api/site-files'); }
   catch (e) { state.files = []; }
 }
 
@@ -441,7 +441,7 @@ async function hydrateChat() {
   if (state.hydrated) return;
   state.hydrated = true;
   try {
-    const hist = await api('/api/site-chat-history');
+    const hist = await api('api/site-chat-history');
     if (hist && hist.conversation_id && Array.isArray(hist.messages) && hist.messages.length) {
       state.messages = hist.messages.map(m => ({ role: m.role, content: m.content, timestamp: Date.now() }));
       state.conversationId = hist.conversation_id;
