@@ -16,9 +16,13 @@ Confirm each of these is installed and on your PATH. Run the check, expect the r
 Missing Node? Install from https://nodejs.org (LTS).
 Missing Claude Code? Install per https://docs.anthropic.com/claude-code.
 
-You also need:
-- An Anthropic API key. Create one at https://console.anthropic.com → Settings → API Keys.
-- A site directory. The folder of HTML/JS/whatever you want the agent to edit.
+You also need ONE of these (not both):
+
+- **Claude Code subscription** (recommended): if you've already paid for Claude Code, run `claude /login` once on this machine. The harness uses your subscription — no separate API billing.
+- **Anthropic API key**: create one at https://console.anthropic.com → Settings → API Keys. Per-token billing on your Anthropic account.
+
+Plus:
+- A site directory. The folder of HTML/JS/whatever you want the agent to edit. Bundled `./sites/example/` works for first-run.
 
 ## Steps
 
@@ -35,11 +39,23 @@ cd harness
 npm install
 ```
 
-This pulls a small dep tree (Express, better-sqlite3, chokidar, dotenv). Should take under a minute.
+This pulls a small dep tree (`@anthropic-ai/sdk`, `better-sqlite3`, `dotenv`). Should take under a minute.
 
-### 3. Get your Anthropic API key
+### 3. Authenticate
 
-Go to https://console.anthropic.com → Settings → API Keys → Create Key. Copy it. Treat it like a password — it bills your account.
+Pick ONE:
+
+**Option A — Claude Code subscription (recommended for buyers who already pay for Claude Code):**
+
+```bash
+claude /login
+```
+
+Follow the prompts. The harness will use your Claude Code session automatically. Skip step 4's `ANTHROPIC_API_KEY` (leave blank).
+
+**Option B — Anthropic API key:**
+
+Go to https://console.anthropic.com → Settings → API Keys → Create Key. Copy it. Treat it like a password — it bills your account per token.
 
 ### 4. Create your `.env`
 
@@ -49,17 +65,17 @@ Copy the example:
 cp .env.example .env
 ```
 
-Open `.env` in your editor. Fill in:
+Open `.env` in your editor. Adjust as needed:
 
 ```
 PORT=7878
-SITE_PATH=/absolute/path/to/your/site
-DB_PATH=./data/harness.db
-ANTHROPIC_API_KEY=sk-ant-...
-MODEL=claude-sonnet-4-5
+SITE_PATH=./sites/example                     # or absolute path to your site
+DB_PATH=./harness.db
+ANTHROPIC_API_KEY=                             # blank if using Claude Code subscription (option A)
+MODEL=claude-sonnet-4-6
 ```
 
-`SITE_PATH` must be an absolute path. `~` and relative paths will fail.
+For your real site, `SITE_PATH` should be an absolute path. The bundled `./sites/example` works as-is for first-run.
 
 ### 5. Start the harness
 
@@ -70,14 +86,14 @@ npm start
 You should see:
 
 ```
-[harness] db ready at ./data/harness.db
-[harness] watching /absolute/path/to/your/site
-[harness] listening on http://localhost:7878
+promptish webdev harness running at http://localhost:7878/
+editing site: /absolute/path/to/your/site
+model:        claude-sonnet-4-6
 ```
 
 ### 6. Open the harness in your browser
 
-Go to `http://localhost:7878`. You'll see the chat pane on the left, the live preview of your site on the right.
+Go to `http://localhost:7878`. You'll see three panes — the file tree on the left, the live preview of your site in the center, the chat sidebar on the right.
 
 ### 7. First chat
 
@@ -92,7 +108,7 @@ That's the loop. Type, edit, refresh.
 ## What success looks like
 
 - `npm start` exits cleanly to a listening state with no stack traces.
-- `http://localhost:7878` shows two panes — chat (left), site preview (right).
+- `http://localhost:7878` shows three panes — file tree (left), site preview (center), chat (right).
 - A chat message that asks for a concrete change results in: (a) the agent describing what it's doing, (b) a file on disk being modified, (c) the preview pane reflecting the change without you reloading.
 - Closing and reopening the browser keeps your prior chat history.
 
