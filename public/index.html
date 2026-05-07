@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Promptish webdev harness</title>
+  <style>
+    :root {
+      --bg: #0e0e12; --panel: #16161c; --panel-2: #1c1c24;
+      --border: #2a2a34; --text: #e8e8ee; --dim: #888894;
+      --accent: #00e0ff; --accent-2: #ff2d92;
+      --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--mono); font-size: 13px;
+      display: flex; flex-direction: column; min-height: 100vh;
+    }
+    header {
+      padding: 8px 14px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+      background: var(--panel);
+    }
+    header .brand { font-weight: bold; color: var(--accent); letter-spacing: .5px; }
+    header .site-label { color: var(--dim); font-size: 11px; }
+    .breakpoints { display: inline-flex; gap: 4px; align-items: center;
+      padding: 3px 8px; border: 1px solid var(--border); border-radius: 3px; }
+    .breakpoints span { color: var(--dim); font-size: 11px; }
+    button { background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+      border-radius: 3px; padding: 4px 10px; font: inherit; font-size: 11px; cursor: pointer; }
+    button:hover { border-color: var(--accent); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    button.active, button.pri {
+      background: var(--accent); color: #000; border-color: var(--accent); font-weight: bold;
+    }
+    main { flex: 1; min-height: 0; display: grid; }
+    .layout { display: grid; flex: 1; min-height: 0; height: 100%; }
+
+    .file-nav { border-right: 1px solid var(--border); overflow-y: auto;
+      background: var(--panel); padding: 8px 0; min-width: 0; }
+    .file-nav .label { color: var(--dim); font-size: 10px; text-transform: uppercase;
+      letter-spacing: .5px; padding: 0 14px 6px; }
+    .file-tree-item { padding: 3px 14px; cursor: pointer; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+    .file-tree-item:hover { background: var(--panel-2); }
+    .file-tree-item.active { background: var(--panel-2); color: var(--accent); }
+    .file-tree-item.dir { color: var(--dim); }
+
+    .preview { min-width: 0; min-height: 0; }
+    .preview-wrap { width: 100%; height: 100%; background: white; }
+    .preview-wrap.scaled { overflow: auto; display: flex; justify-content: center; }
+    .preview iframe { display: block; border: none; }
+
+    .chat { display: flex; flex-direction: column; min-width: 0; min-height: 0;
+      border-left: 1px solid var(--border); background: var(--panel); }
+    .chat-header { display: flex; align-items: center; gap: 6px;
+      padding: 6px 10px; border-bottom: 1px solid var(--border); }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 10px; min-height: 0; }
+    .chat-input { display: flex; gap: 4px; padding: 8px; border-top: 1px solid var(--border); }
+    .chat-input input[type=text] { flex: 1; background: var(--panel-2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 3px; padding: 6px 8px; font: inherit; }
+    .bubble { margin-bottom: 8px; padding: 6px 8px; border-radius: 3px; }
+    .bubble[data-role="user"] { background: rgba(0, 224, 255, 0.08); }
+    .bubble[data-role="assistant"], .bubble[data-role="claude"] { background: var(--panel-2); }
+    .bubble[data-role="error"] { background: rgba(255, 45, 146, 0.1); color: var(--accent-2); }
+    .bubble-header { font-size: 10px; color: var(--dim); margin-bottom: 2px;
+      display: flex; justify-content: space-between; gap: 8px; }
+    .bubble-content { word-wrap: break-word; white-space: pre-wrap; font-size: 12px; }
+    .att-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .att-chip { display: inline-flex; flex-direction: column; align-items: flex-start;
+      gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: 3px;
+      background: var(--panel-2); max-width: 180px; }
+    .att-chip img { max-width: 160px; max-height: 120px; border-radius: 2px; display: block; }
+    .att-chip .name { font-size: 10px; color: var(--dim); word-break: break-all; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="brand">PROMPTISH · WEBDEV</span>
+  <span class="site-label" id="site-label">loading…</span>
+  <span style="flex:1;"></span>
+  <div class="breakpoints" id="bp-bar">
+    <span>preview:</span>
+    <button data-bp="fit" class="active">fit</button>
+    <button data-bp="1440">1440</button>
+    <button data-bp="768">768</button>
+    <button data-bp="375">375</button>
+  </div>
+  <button id="toggle-files">hide files</button>
+  <button id="toggle-chat">hide chat</button>
+</header>
+
+<main id="main"></main>
+
+<script>
+// -----------------------------------------------------------------------------
+// State
+// -----------------------------------------------------------------------------
+const state = {
+  files: [],
+  currentFile: null,
+  breakpoint: 'fit',
+  filesCollapsed: false,
+  chatCollapsed: false,
+  messages: [],   // [{ role, content, timestamp, attachments? }]
+  pending: false,
+  conversationId: localStorage.getItem('harness-session') || null,
+  hydrated: false,
+  pendingAttachments: [], // [{ file, name, previewUrl }]
+};
+
+// -----------------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------------
+async function api(path) {
+  const r = await fetch(path);
+  if (!r.ok) throw new Error(`${r.status} ${path}`);
+  return r.json();
+}
+
+function el(tag, props = {}, ...children) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === 'class') e.className = v;
+    else if (k === 'onclick') e.onclick = v;
+    else if (k === 'html') e.innerHTML = v;
+    else e.setAttribute(k, v);
+  }
+  for (const c of children) {
+    if (c == null) continue;
+    e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return e;
+}
+
+function fmtTs(ts) {
+  if (!ts) return '';
+  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatChatContent(text) {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+    .replace(/\n/g, '<br>');
+}
+
+function renderFileTree(items, depth = 0) {
+  const container = el('div');
+  for (const item of items) {
+    const cls = item.type === 'dir' ? 'dir' : `file ${item.path.split('.').pop()}`;
+    const itemEl = el('div', {
+      class: `file-tree-item ${cls} ${state.currentFile === item.path ? 'active' : ''}`,
+    }, item.name);
+    itemEl.style.paddingLeft = (14 + depth * 14) + 'px';
+    itemEl.onclick = () => {
+      if (item.type === 'file') { state.currentFile = item.path; render(); }
+    };
+    container.appendChild(itemEl);
+    if (item.children) container.appendChild(renderFileTree(item.children, depth + 1));
+  }
+  return container;
+}
+
+// -----------------------------------------------------------------------------
+// Render
+// -----------------------------------------------------------------------------
+function render() {
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+
+  const leftCol = state.filesCollapsed ? '' : 'minmax(180px, 16%) ';
+  const rightCol = state.chatCollapsed ? '' : ' minmax(280px, 22%)';
+  const layout = el('div', { class: 'layout',
+    style: `grid-template-columns: ${leftCol}1fr${rightCol};` });
+
+  // File tree
+  if (!state.filesCollapsed) {
+    const nav = el('div', { class: 'file-nav' },
+      el('div', { class: 'label' }, 'files'),
+      renderFileTree(state.files));
+    layout.appendChild(nav);
+  }
+
+  // Preview iframe
+  const bp = state.breakpoint;
+  const previewFile = (state.currentFile && state.currentFile.endsWith('.html'))
+    ? state.currentFile : 'index.html';
+  const iframeStyle = bp === 'fit'
+    ? 'width:100%;height:100%;'
+    : `width:${bp}px;max-width:100%;height:100%;`;
+  const iframe = el('iframe', {
+    src: `/api/site-preview/${encodeURI(previewFile)}`,
+    style: iframeStyle,
+  });
+  const wrap = el('div', { class: bp === 'fit' ? 'preview-wrap' : 'preview-wrap scaled' }, iframe);
+  layout.appendChild(el('div', { class: 'preview' }, wrap));
+
+  // Chat
+  if (!state.chatCollapsed) layout.appendChild(buildChatPanel());
+
+  main.appendChild(layout);
+
+  // Update breakpoint button states
+  document.querySelectorAll('#bp-bar button').forEach(b => {
+    b.classList.toggle('active', String(state.breakpoint) === b.dataset.bp);
+  });
+  document.getElementById('toggle-files').textContent = state.filesCollapsed ? 'show files' : 'hide files';
+  document.getElementById('toggle-chat').textContent = state.chatCollapsed ? 'show chat' : 'hide chat';
+}
+
+function buildChatPanel() {
+  const chat = el('div', { class: 'chat' });
+  const header = el('div', { class: 'chat-header' },
+    el('span', { style: 'color:var(--dim);font-size:11px;flex:1;' }, 'chat with claude'));
+  chat.appendChild(header);
+
+  const messagesEl = el('div', { class: 'chat-messages' },
+    ...state.messages.map(buildBubble));
+  chat.appendChild(messagesEl);
+  setTimeout(() => { messagesEl.scrollTop = messagesEl.scrollHeight; }, 0);
+
+  // Pending attachments row
+  const attRow = el('div', { class: 'att-row', style: 'padding:0 8px;' });
+  function renderAttRow() {
+    attRow.innerHTML = '';
+    state.pendingAttachments.forEach((att, i) => {
+      const chip = el('div', { class: 'att-chip', style: 'flex-direction:row;align-items:center;padding:2px 6px;' });
+      if (att.previewUrl) chip.appendChild(el('img', { src: att.previewUrl, style: 'height:24px;width:auto;border-radius:2px;' }));
+      chip.appendChild(el('span', { style: 'font-size:10px;' }, att.name));
+      const x = el('button', { style: 'background:none;border:none;color:var(--dim);padding:0 4px;font-size:14px;' }, '×');
+      x.onclick = () => {
+        if (att.previewUrl) URL.revokeObjectURL(att.previewUrl);
+        state.pendingAttachments.splice(i, 1);
+        renderAttRow();
+      };
+      chip.appendChild(x);
+      attRow.appendChild(chip);
+    });
+  }
+  renderAttRow();
+  chat.appendChild(attRow);
+
+  // Input row
+  const fileInput = el('input', { type: 'file', accept: 'image/*', multiple: true, style: 'display:none;' });
+  const fileBtn = el('button', { title: 'attach image' }, '📎');
+  fileBtn.onclick = () => fileInput.click();
+  function addImage(f) {
+    if (!f || !/^image\//.test(f.type)) return;
+    state.pendingAttachments.push({ file: f, name: f.name || 'pasted.png', previewUrl: URL.createObjectURL(f) });
+    renderAttRow();
+  }
+  fileInput.onchange = () => { [...fileInput.files].forEach(addImage); fileInput.value = ''; };
+
+  const input = el('input', { type: 'text',
+    placeholder: state.pending ? 'claude is working…' : 'describe what you want…' });
+  input.disabled = state.pending;
+  input.addEventListener('paste', (e) => {
+    if (!e.clipboardData) return;
+    let handled = false;
+    for (const it of e.clipboardData.items) {
+      if (it.kind === 'file') {
+        const f = it.getAsFile();
+        if (f && /^image\//.test(f.type)) { addImage(f); handled = true; }
+      }
+    }
+    if (handled) e.preventDefault();
+  });
+  chat.addEventListener('dragover', (e) => e.preventDefault());
+  chat.addEventListener('drop', (e) => {
+    if (!e.dataTransfer || !e.dataTransfer.files.length) return;
+    e.preventDefault();
+    [...e.dataTransfer.files].forEach(addImage);
+  });
+
+  const sendBtn = el('button', { class: 'pri' }, state.pending ? '…' : 'send');
+  sendBtn.disabled = state.pending;
+
+  async function send() {
+    const msg = input.value.trim();
+    if ((!msg && !state.pendingAttachments.length) || state.pending) return;
+    const sentAttachments = state.pendingAttachments.splice(0);
+
+    // Reify attachments to dataURL for the in-bubble preview.
+    const bubbleAttachments = await Promise.all(sentAttachments.map(a => new Promise(resolve => {
+      const r = new FileReader();
+      r.onload = () => resolve({ name: a.name, dataUrl: r.result });
+      r.onerror = () => resolve({ name: a.name, dataUrl: null });
+      r.readAsDataURL(a.file);
+    })));
+
+    state.messages.push({ role: 'user', content: msg, attachments: bubbleAttachments, timestamp: Date.now() });
+    state.pending = true;
+    input.value = '';
+    input.disabled = true;
+    input.placeholder = 'claude is working…';
+    sendBtn.disabled = true;
+    sendBtn.textContent = '…';
+
+    // Append user bubble in-place — avoid full re-render so iframe doesn't reload.
+    messagesEl.appendChild(buildBubble(state.messages[state.messages.length - 1]));
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    try {
+      let resp;
+      if (sentAttachments.length) {
+        const fd = new FormData();
+        fd.append('prompt', msg || '(see attached screenshots)');
+        if (state.conversationId) fd.append('session_id', state.conversationId);
+        if (state.currentFile) fd.append('selected_file', state.currentFile);
+        sentAttachments.forEach(a => fd.append('images', a.file, a.name));
+        resp = await (await fetch('/api/site-chat', { method: 'POST', body: fd })).json();
+        sentAttachments.forEach(a => { if (a.previewUrl) URL.revokeObjectURL(a.previewUrl); });
+      } else {
+        resp = await (await fetch('/api/site-chat', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: msg, session_id: state.conversationId, selected_file: state.currentFile }),
+        })).json();
+      }
+      if (resp.error) throw new Error(resp.error);
+      state.conversationId = resp.session_id;
+      try { localStorage.setItem('harness-session', resp.session_id); } catch {}
+      pollDispatch(resp.dispatch_id, messagesEl, input, sendBtn);
+    } catch (e) {
+      state.messages.push({ role: 'error', content: String(e.message || e), timestamp: Date.now() });
+      messagesEl.appendChild(buildBubble(state.messages[state.messages.length - 1]));
+      state.pending = false;
+      input.disabled = false;
+      input.placeholder = 'describe what you want…';
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'send';
+    }
+  }
+  sendBtn.onclick = send;
+  input.onkeydown = (e) => { if (e.key === 'Enter') send(); };
+
+  const inputRow = el('div', { class: 'chat-input' }, fileBtn, fileInput, input, sendBtn);
+  chat.appendChild(inputRow);
+
+  if (!state.pending) setTimeout(() => input.focus(), 0);
+  return chat;
+}
+
+function buildBubble(msg) {
+  const bubble = el('div', { class: 'bubble', 'data-role': msg.role },
+    el('div', { class: 'bubble-header' },
+      el('span', {}, msg.role),
+      el('span', { style: 'opacity:.6;' }, fmtTs(msg.timestamp))),
+    el('div', { class: 'bubble-content', html: formatChatContent(msg.content || '') }));
+  if (Array.isArray(msg.attachments) && msg.attachments.length) {
+    const row = el('div', { class: 'att-row' });
+    for (const a of msg.attachments) {
+      const chip = el('div', { class: 'att-chip' });
+      if (a.dataUrl) chip.appendChild(el('img', { src: a.dataUrl }));
+      chip.appendChild(el('div', { class: 'name' }, `📎 ${a.name || 'image'}`));
+      row.appendChild(chip);
+    }
+    bubble.appendChild(row);
+  }
+  return bubble;
+}
+
+async function pollDispatch(dispatchId, messagesEl, input, sendBtn) {
+  let last = '';
+  const tick = async () => {
+    let p;
+    try { p = await api(`/api/site-chat-poll?dispatch_id=${encodeURIComponent(dispatchId)}`); }
+    catch (e) { p = { content: '', status: 'failed' }; }
+    if (p.content !== last) {
+      last = p.content;
+      const lastEl = messagesEl.lastElementChild;
+      if (lastEl && lastEl.dataset.role === 'assistant') {
+        const c = lastEl.querySelector('.bubble-content');
+        if (c) c.textContent = p.content;
+      } else {
+        const m = { role: 'assistant', content: p.content || '', timestamp: Date.now() };
+        state.messages.push(m);
+        messagesEl.appendChild(buildBubble(m));
+      }
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+    if (p.status === 'running' || p.status === 'queued') {
+      setTimeout(tick, 1500);
+    } else {
+      state.pending = false;
+      // Update last assistant turn's content with final tail.
+      if (state.messages.length && state.messages[state.messages.length - 1].role === 'assistant') {
+        state.messages[state.messages.length - 1].content = p.content || '';
+      } else {
+        state.messages.push({ role: 'assistant', content: p.content || '', timestamp: Date.now() });
+        messagesEl.appendChild(buildBubble(state.messages[state.messages.length - 1]));
+      }
+      input.disabled = false;
+      input.placeholder = 'describe what you want…';
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'send';
+      setTimeout(() => input.focus(), 0);
+
+      // Reload preview iframe if Claude actually edited files.
+      if (Array.isArray(p.changed_files) && p.changed_files.length) {
+        const iframeEl = document.querySelector('.preview iframe');
+        if (iframeEl) {
+          const cur = iframeEl.getAttribute('src') || '';
+          const base = cur.split('?')[0];
+          iframeEl.setAttribute('src', base + '?t=' + Date.now());
+        }
+        // Refresh the file tree (new files may have appeared).
+        loadFiles();
+      }
+    }
+  };
+  setTimeout(tick, 1000);
+}
+
+// -----------------------------------------------------------------------------
+// Header wiring
+// -----------------------------------------------------------------------------
+document.querySelectorAll('#bp-bar button').forEach(b => {
+  b.onclick = () => {
+    const v = b.dataset.bp;
+    state.breakpoint = v === 'fit' ? 'fit' : parseInt(v, 10);
+    render();
+  };
+});
+document.getElementById('toggle-files').onclick = () => { state.filesCollapsed = !state.filesCollapsed; render(); };
+document.getElementById('toggle-chat').onclick = () => { state.chatCollapsed = !state.chatCollapsed; render(); };
+
+// -----------------------------------------------------------------------------
+// Boot
+// -----------------------------------------------------------------------------
+async function loadFiles() {
+  try { state.files = await api('/api/site-files'); }
+  catch (e) { state.files = []; }
+}
+
+async function hydrateChat() {
+  if (state.hydrated) return;
+  state.hydrated = true;
+  try {
+    const hist = await api('/api/site-chat-history');
+    if (hist && hist.conversation_id && Array.isArray(hist.messages) && hist.messages.length) {
+      state.messages = hist.messages.map(m => ({ role: m.role, content: m.content, timestamp: Date.now() }));
+      state.conversationId = hist.conversation_id;
+      try { localStorage.setItem('harness-session', hist.conversation_id); } catch {}
+    }
+  } catch {}
+}
+
+(async () => {
+  try {
+    const health = await api('/api/health');
+    document.getElementById('site-label').textContent = health.site || '';
+  } catch {}
+  await loadFiles();
+  await hydrateChat();
+  render();
+})();
+</script>
+
+</body>
+</html>
