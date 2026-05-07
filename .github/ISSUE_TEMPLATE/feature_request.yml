@@ -1,0 +1,49 @@
+name: 💡 Feature request
+description: Something you wish the harness did
+title: "[feature] "
+labels: ["feature-request", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Feature requests are read but not promised. Most useful ones describe a real workflow you're trying to do, not a feature you've imagined.
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: What are you trying to do?
+      description: The end goal in plain language. "I want to do X but the harness doesn't let me." Be concrete.
+      placeholder: |
+        I want my customers to be able to preview a site on a custom domain
+        without uploading anywhere, just by typing a URL into the harness.
+    validations:
+      required: true
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: What do you do today instead?
+      description: Even "nothing, I just don't do it" is a useful answer.
+    validations:
+      required: true
+
+  - type: textarea
+    id: shape
+    attributes:
+      label: Rough shape of what you'd want
+      description: Don't design the feature. Just sketch what good looks like for you.
+      placeholder: |
+        Some way to set BASE_URL in config so the preview iframe loads against
+        that instead of the local file server.
+
+  - type: dropdown
+    id: priority-for-you
+    attributes:
+      label: How blocked are you without this?
+      options:
+        - "Not blocked, just nice-to-have"
+        - "Workaround is annoying"
+        - "Workaround is painful but possible"
+        - "I'd stop using the harness over this"
+    validations:
+      required: true
