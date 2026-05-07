@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Read the docs first
+    url: https://github.com/promptish/harness#readme
+    about: Most questions are answered in the README.
+  - name: 🛒 Buy a license
+    url: https://promptish.io/harness
+    about: Don't have the harness yet? Get it here.
